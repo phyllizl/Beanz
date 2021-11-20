@@ -67,7 +67,7 @@ const makeDiv1 = () => {
 
 //MAKE DIV2 TO HOLD TIMER
 const makeDiv2 = () => {
-    const $div2 = $("<div2>");
+    const $div2 = $("<div2>").addClass("div2");
     $(".container").append($div2);
 
     //create and append countdown container
@@ -133,6 +133,7 @@ const createGrid = (num) => {
     $(".square").width(($(".square").closest("#grid").width())/num);
     $(".square").height(($(".square").closest("#grid").height())/num);
 }
+
 
 //CREATE GREEN IN RANDOM SQUARES
 const placeGreen = () => {
@@ -248,6 +249,7 @@ const startButton = () => {
         //TIMER COUNTDOWN
         let counter = timer;
         //CLICK FUNCTIONS ACTIVATED
+        createGrid(gridSize);
         $clickGreen();
         $clickRed();
         $clickMagic();
@@ -297,6 +299,7 @@ const refreshContainer = () => {
     $(".container").empty();
     makeDiv1();
     makeDiv2();
+    console.log('gridsize', gridSize)
     createGrid(gridSize);
     placeGreen();
     startButton();

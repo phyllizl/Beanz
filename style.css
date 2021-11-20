@@ -80,9 +80,10 @@
    }
   
    #base-timer {
-    display: inline-block;
-    height: 20%;
-    width: 20%;
+    display: flex;
+    /* height: 20%;
+    width: 20%; */
+    /* justify-content: center; */
     /* border-radius: 5px; */
     /* background: #1d81af; */
     
@@ -90,7 +91,7 @@
   
    #timer {
       font-family: "Fira Sans", sans-serif;
-      position: center;
+      /* position: center; */
       /* padding: 30px;  */
       /* background: #1d81af; */
       /* background-color: black; */
@@ -101,6 +102,10 @@
    #secs {
     font-weight: bold;
     font-size: 4vw;
+   }
+
+   #divButtons {
+     display: flex;
    }
 
    .green {
