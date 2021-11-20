@@ -48,8 +48,8 @@ const makeInstructions = () => {
     $("body").append(box);
     $(box).append(div3);
     //INSTRUCTIONS
-    $(div3).append("<h1>INSTRUCTIONS</h1>").append('<h2>Click on as many Green Beans <img src="assets/greenbean.gif" width="60px" height="60px"/> as possible while avoiding the Red Beans <img src="assets/3dgifmaker89063.gif" width="60px" height="60px"</img>! If you spot the Magic Beans <img src="assets/magicBeans.gif" width="60px" height="60px"/>, act fast and click on them for bonus points!</h2>');
-    $(div3).append('<h2>A successfully clicked Green Bean turns into a Sprout  <img src="assets/greenSoil.png" width="50px" height="50px"/> and + 5 points to your score ! A successfully clicked Magic Bean turns into a Star <img src="assets/newstar.png" style="padding-top: 10px;" width="50px" height="50px"/> and + 8 points to your score! Click on a Red Bean and ... a Monster Bean appears <img src="assets/monster.gif" width="60px" height="60px"/> and - 3 points to your score!  Eeps!');
+    $(div3).append("<h1>INSTRUCTIONS</h1>").append('<h2>Click on as many Green Beans <img src="assets/greenbean.gif" width="30px" height="30px"/> as possible while avoiding the Red Beans <img src="assets/3dgifmaker89063.gif" width="30px" height="30px"</img>! If you spot the Magic Beans <img src="assets/magicBeans.gif" width="30px" height="30px"/>, act fast and click on them for bonus points!</h2>');
+    $(div3).append('<h2>A successfully clicked Green Bean turns into a Sprout  <img src="assets/greenSoil.png" width="30px" height="30px"/> and + 5 points to your score ! <br/> A successfully clicked Magic Bean turns into a Star <img src="assets/newstar.png" style="padding-top: 10px;" width="30px" height="30px"/> and + 8 points to your score! <br /> Click on a Red Bean and ... a Monster Bean appears <img src="assets/monster.gif" width="30px" height="30px"/> and - 3 points to your score!  Eeps!');
     //APPEND BUTTON TO ENTER GAMEBOARD
     let playNow = $("<button>PLAY NOW</button>");
     $(div3).append(playNow);
