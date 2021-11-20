@@ -113,7 +113,7 @@ let magicIntervals = 5;
 let greenPoints = 5;
 let redPoints = -3;
 let magicPoints = 8;
-let timer = 6; 
+let timer = 12; 
 const magicAppear = 2000;
 
 /////////////////////////////////////////////////////////////
@@ -257,7 +257,7 @@ const startButton = () => {
         let start = setInterval(function () {
             //IF 0 --> SHOW SCORE, TURN OFF CLICK FUNCTIONS, TRIGGER TIME RESET
             if (counter === 0) {
-                $("#secs").html("DONE" + "<br/>" + "YOUR SCORE: " + points);
+                $("#secs").html("DONE! " + "YOUR SCORE: " + points);
                 $("div1").off("click");
                 clearInterval(start);
                 playAgainButton();
