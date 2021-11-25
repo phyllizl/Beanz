@@ -99,6 +99,7 @@
       /* position: center; */
       /* background: #1d81af; */
       /* background-color: black; */
+      display: flex;
       color: white;
       font-size: 4vw;
       height: 40px
