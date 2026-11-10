@@ -210,6 +210,15 @@ describe('useGame - edge cases', () => {
     expect(result.current.score).toBe(POINTS.green);
   });
 
+  test('rapid double-tap on red does not double-deduct while monster visible', () => {
+    const { result } = renderHook(() => useGame());
+    act(() => { result.current.startGame(1); });
+    const redCell = result.current.grid.find((c: Cell) => c.type === 'red')!;
+    act(() => { result.current.tapCell(redCell.id); });
+    act(() => { result.current.tapCell(redCell.id); });
+    expect(result.current.score).toBe(POINTS.red);
+  });
+
   test('game over during magic cycle disables all taps', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(1); });

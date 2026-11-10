@@ -105,13 +105,10 @@ export function useGame() {
         }
 
         if ((prev - 1) % MAGIC_INTERVAL === 0 && prev - 1 > 0) {
-          setGrid(g => {
-            const withMagic = applyMagic(g, level);
-            magicTimeoutRef.current = setTimeout(() => {
-              setGrid(current => removeMagic(current));
-            }, MAGIC_VISIBLE_DURATION);
-            return withMagic;
-          });
+          setGrid(g => applyMagic(g, level));
+          magicTimeoutRef.current = setTimeout(() => {
+            setGrid(current => removeMagic(current));
+          }, MAGIC_VISIBLE_DURATION);
         }
 
         return prev - 1;
@@ -130,8 +127,7 @@ export function useGame() {
 
       const cell = prevGrid[cellIndex];
 
-      if (cell.type === 'green' && cell.tapped) return prevGrid;
-      if (cell.type === 'magic' && cell.tapped) return prevGrid;
+      if (cell.tapped) return prevGrid;
 
       let pointDelta = 0;
       let updatedCell: Cell;
