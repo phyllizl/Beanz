@@ -3,23 +3,19 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 
 interface GameOverPanelProps {
   score: number;
+  wave: number;
   onPlayAgain: () => void;
-  onLevel2: () => void;
 }
 
-export function GameOverPanel({ score, onPlayAgain, onLevel2 }: GameOverPanelProps) {
+export function GameOverPanel({ score, wave, onPlayAgain }: GameOverPanelProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.doneText}>DONE!</Text>
+      <Text style={styles.doneText}>GAME OVER</Text>
+      <Text style={styles.waveText}>{`WAVE ${wave}`}</Text>
       <Text style={styles.scoreText}>YOUR SCORE: {score}</Text>
-      <View style={styles.buttons}>
-        <Pressable style={styles.button} onPress={onPlayAgain}>
-          <Text style={styles.buttonText}>PLAY AGAIN</Text>
-        </Pressable>
-        <Pressable style={styles.button} onPress={onLevel2}>
-          <Text style={styles.buttonText}>LEVEL 2</Text>
-        </Pressable>
-      </View>
+      <Pressable style={styles.button} onPress={onPlayAgain}>
+        <Text style={styles.buttonText}>PLAY AGAIN</Text>
+      </Pressable>
     </View>
   );
 }
@@ -30,19 +26,21 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   doneText: {
-    color: '#FFFF00',
+    color: '#FF4444',
     fontSize: 36,
     fontWeight: 'bold',
+  },
+  waveText: {
+    color: '#FFFF00',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 8,
   },
   scoreText: {
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: 'bold',
     marginVertical: 12,
-  },
-  buttons: {
-    flexDirection: 'row',
-    gap: 16,
   },
   button: {
     backgroundColor: '#FFFF00',

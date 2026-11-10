@@ -1,15 +1,18 @@
-export type Level = 1 | 2;
-
-export interface LevelConfig {
+export interface WaveConfig {
   gridSize: number;
   greenPercent: number;
   magicCount: number;
 }
 
-export const LEVELS: Record<Level, LevelConfig> = {
-  1: { gridSize: 6, greenPercent: 35, magicCount: 2 },
-  2: { gridSize: 9, greenPercent: 30, magicCount: 5 },
-};
+export const MAX_WAVE = 9;
+
+export function getWaveConfig(wave: number): WaveConfig {
+  return {
+    gridSize: wave + 3,
+    greenPercent: 42 - wave * 2,
+    magicCount: Math.ceil(wave / 2),
+  };
+}
 
 export const TIMER_DURATION = 12;
 export const MAGIC_INTERVAL = 5;

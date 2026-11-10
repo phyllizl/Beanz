@@ -3,35 +3,50 @@ import { useGame } from '../hooks/useGame';
 import { BeanGrid } from '../components/BeanGrid';
 import { ScoreBoard } from '../components/ScoreBoard';
 import { GameOverPanel } from '../components/GameOverPanel';
-import { LEVELS } from '../constants/game';
+import { WaveCompletePanel } from '../components/WaveCompletePanel';
+import { getWaveConfig } from '../constants/game';
 
 export default function GameScreen() {
-  const { score, timeLeft, isRunning, grid, startGame, tapCell, isGameOver, level } = useGame();
+  const { score, waveScore, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell } = useGame();
+
+  const isPlaying = gamePhase === 'playing';
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>BEANZ</Text>
 
-      {isGameOver ? (
-        <GameOverPanel
-          score={score}
-          onPlayAgain={() => startGame(1)}
-          onLevel2={() => startGame(2)}
+      {gamePhase === 'game-over' && (
+        <GameOverPanel score={score} wave={wave} onPlayAgain={startGame} />
+      )}
+
+      {gamePhase === 'victory' && (
+        <GameOverPanel score={score} wave={wave} onPlayAgain={startGame} />
+      )}
+
+      {gamePhase === 'wave-complete' && (
+        <WaveCompletePanel
+          wave={wave}
+          waveScore={waveScore}
+          totalScore={score}
+          onNextWave={nextWave}
         />
-      ) : (
+      )}
+
+      {(gamePhase === 'idle' || gamePhase === 'playing') && (
         <ScoreBoard
           timeLeft={timeLeft}
           score={score}
-          isRunning={isRunning}
-          onStart={() => startGame(level)}
+          wave={wave}
+          isRunning={isPlaying}
+          onStart={startGame}
         />
       )}
 
       <BeanGrid
         grid={grid}
-        gridSize={LEVELS[level].gridSize}
+        gridSize={getWaveConfig(wave).gridSize}
         onTap={tapCell}
-        disabled={isGameOver || !isRunning}
+        disabled={!isPlaying}
       />
     </View>
   );

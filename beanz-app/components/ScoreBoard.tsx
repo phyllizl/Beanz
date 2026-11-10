@@ -4,15 +4,17 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 interface ScoreBoardProps {
   timeLeft: number;
   score: number;
+  wave: number;
   isRunning: boolean;
   onStart: () => void;
 }
 
-export function ScoreBoard({ timeLeft, score, isRunning, onStart }: ScoreBoardProps) {
+export function ScoreBoard({ timeLeft, score, wave, isRunning, onStart }: ScoreBoardProps) {
   return (
     <View style={styles.container}>
       {isRunning ? (
         <>
+          <Text style={styles.wave}>{`WAVE ${wave}`}</Text>
           <Text style={styles.timer}>{timeLeft}</Text>
           <Text style={styles.score}>YOUR SCORE: {score}</Text>
         </>
@@ -29,6 +31,11 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingVertical: 16,
+  },
+  wave: {
+    color: '#FFFF00',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   timer: {
     color: '#FFFFFF',

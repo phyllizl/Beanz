@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { LEVELS, TIMER_DURATION, MAGIC_INTERVAL, MAGIC_VISIBLE_DURATION, POINTS } from '../constants/game';
-import type { Level } from '../constants/game';
+import { getWaveConfig, MAX_WAVE, TIMER_DURATION, MAGIC_INTERVAL, MAGIC_VISIBLE_DURATION, POINTS } from '../constants/game';
 
 export interface Cell {
   id: string;
@@ -8,6 +7,8 @@ export interface Cell {
   tapped: boolean;
   originalType?: 'green' | 'red';
 }
+
+export type GamePhase = 'idle' | 'playing' | 'wave-complete' | 'game-over' | 'victory';
 
 function shuffle<T>(array: T[]): T[] {
   const arr = [...array];
@@ -18,8 +19,8 @@ function shuffle<T>(array: T[]): T[] {
   return arr;
 }
 
-function buildGrid(level: Level): Cell[] {
-  const config = LEVELS[level];
+function buildGrid(wave: number): Cell[] {
+  const config = getWaveConfig(wave);
   const total = config.gridSize * config.gridSize;
   const numGreen = Math.floor((total / 100) * config.greenPercent);
 
@@ -37,13 +38,12 @@ function buildGrid(level: Level): Cell[] {
 export function useGame() {
   const [grid, setGrid] = useState<Cell[]>([]);
   const [score, setScore] = useState(0);
+  const [waveScore, setWaveScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
-  const [isRunning, setIsRunning] = useState(false);
-  const [level, setLevel] = useState<Level>(1);
+  const [gamePhase, setGamePhase] = useState<GamePhase>('idle');
+  const [wave, setWave] = useState(1);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const magicTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const isGameOver = !isRunning && timeLeft === 0;
 
   const clearTimers = useCallback(() => {
     if (timerRef.current) {
@@ -56,8 +56,8 @@ export function useGame() {
     }
   }, []);
 
-  const applyMagic = useCallback((currentGrid: Cell[], currentLevel: Level): Cell[] => {
-    const config = LEVELS[currentLevel];
+  const applyMagic = useCallback((currentGrid: Cell[], currentWave: number): Cell[] => {
+    const config = getWaveConfig(currentWave);
     const newGrid = currentGrid.map(c => ({ ...c }));
     const nonMagicIndices = newGrid
       .map((c, i) => (c.type !== 'magic' ? i : -1))
@@ -83,29 +83,52 @@ export function useGame() {
     });
   }, []);
 
-  const startGame = useCallback((newLevel: Level = 1) => {
+  const startGame = useCallback(() => {
     clearTimers();
-    setLevel(newLevel);
+    setWave(1);
     setScore(0);
+    setWaveScore(0);
     setTimeLeft(TIMER_DURATION);
-    setGrid(buildGrid(newLevel));
-    setIsRunning(true);
+    setGrid(buildGrid(1));
+    setGamePhase('playing');
   }, [clearTimers]);
 
+  const nextWave = useCallback(() => {
+    if (gamePhase !== 'wave-complete') return;
+    clearTimers();
+    const next = wave + 1;
+    setWave(next);
+    setWaveScore(0);
+    setTimeLeft(TIMER_DURATION);
+    setGrid(buildGrid(next));
+    setGamePhase('playing');
+  }, [gamePhase, wave, clearTimers]);
+
   useEffect(() => {
-    if (!isRunning) return;
+    if (gamePhase !== 'playing') return;
 
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearTimers();
-          setIsRunning(false);
           setGrid(g => removeMagic(g));
+          setWaveScore(ws => {
+            if (ws > 0) {
+              if (wave >= MAX_WAVE) {
+                setGamePhase('victory');
+              } else {
+                setGamePhase('wave-complete');
+              }
+            } else {
+              setGamePhase('game-over');
+            }
+            return ws;
+          });
           return 0;
         }
 
         if ((prev - 1) % MAGIC_INTERVAL === 0 && prev - 1 > 0) {
-          setGrid(g => applyMagic(g, level));
+          setGrid(g => applyMagic(g, wave));
           magicTimeoutRef.current = setTimeout(() => {
             setGrid(current => removeMagic(current));
           }, MAGIC_VISIBLE_DURATION);
@@ -116,10 +139,10 @@ export function useGame() {
     }, 1000);
 
     return () => { clearTimers(); };
-  }, [isRunning, level, clearTimers, applyMagic, removeMagic]);
+  }, [gamePhase, wave, clearTimers, applyMagic, removeMagic]);
 
   const tapCell = useCallback((id: string) => {
-    if (!isRunning) return;
+    if (gamePhase !== 'playing') return;
 
     setGrid(prevGrid => {
       const cellIndex = prevGrid.findIndex(c => c.id === id);
@@ -159,11 +182,12 @@ export function useGame() {
       }
 
       setScore(s => s + pointDelta);
+      setWaveScore(ws => ws + pointDelta);
       const newGrid = [...prevGrid];
       newGrid[cellIndex] = updatedCell;
       return shuffle(newGrid);
     });
-  }, [isRunning]);
+  }, [gamePhase]);
 
-  return { score, timeLeft, isRunning, grid, startGame, tapCell, isGameOver, level };
+  return { score, waveScore, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell };
 }
