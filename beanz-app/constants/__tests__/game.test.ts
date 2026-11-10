@@ -13,8 +13,8 @@ describe('game constants', () => {
     expect(MIN_TIMER).toBe(8);
   });
 
-  test('green threshold is 50%', () => {
-    expect(GREEN_THRESHOLD).toBe(0.5);
+  test('green threshold is 100%', () => {
+    expect(GREEN_THRESHOLD).toBe(1.0);
   });
 
   test('magic interval is 5 seconds', () => {

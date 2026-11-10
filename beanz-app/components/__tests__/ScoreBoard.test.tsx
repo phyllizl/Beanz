@@ -43,6 +43,6 @@ describe('ScoreBoard', () => {
     expect(json).toContain('8');
     expect(json).toContain('15');
     expect(json).toContain('WAVE 3');
-    expect(json).toContain('3/5 GREENS');
+    expect(json).toContain('3/10 GREENS');
   });
 });

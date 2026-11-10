@@ -7,7 +7,7 @@ export interface WaveConfig {
 export const MAX_WAVE = 9;
 export const BASE_TIMER = 12;
 export const MIN_TIMER = 8;
-export const GREEN_THRESHOLD = 0.5;
+export const GREEN_THRESHOLD = 1.0;
 
 export function getWaveConfig(wave: number): WaveConfig {
   return {
