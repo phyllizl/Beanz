@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { getWaveConfig, MAX_WAVE, TIMER_DURATION, MAGIC_INTERVAL, MAGIC_VISIBLE_DURATION, POINTS } from '../constants/game';
+import { getWaveConfig, getWaveTimer, MAX_WAVE, MAGIC_INTERVAL, MAGIC_VISIBLE_DURATION, POINTS, GREEN_THRESHOLD } from '../constants/game';
 
 export interface Cell {
   id: string;
@@ -39,9 +39,14 @@ export function useGame() {
   const [grid, setGrid] = useState<Cell[]>([]);
   const [score, setScore] = useState(0);
   const [waveScore, setWaveScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
+  const [greensTapped, setGreensTapped] = useState(0);
+  const [totalGreens, setTotalGreens] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [gamePhase, setGamePhase] = useState<GamePhase>('idle');
   const [wave, setWave] = useState(1);
+
+  const greensTappedRef = useRef(0);
+  const totalGreensRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const magicTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -83,26 +88,33 @@ export function useGame() {
     });
   }, []);
 
+  const initWave = useCallback((w: number) => {
+    const newGrid = buildGrid(w);
+    const greens = newGrid.filter(c => c.type === 'green').length;
+    setGrid(newGrid);
+    setTotalGreens(greens);
+    totalGreensRef.current = greens;
+    setGreensTapped(0);
+    greensTappedRef.current = 0;
+    setWaveScore(0);
+    setTimeLeft(getWaveTimer(w));
+    setGamePhase('playing');
+  }, []);
+
   const startGame = useCallback(() => {
     clearTimers();
     setWave(1);
     setScore(0);
-    setWaveScore(0);
-    setTimeLeft(TIMER_DURATION);
-    setGrid(buildGrid(1));
-    setGamePhase('playing');
-  }, [clearTimers]);
+    initWave(1);
+  }, [clearTimers, initWave]);
 
   const nextWave = useCallback(() => {
     if (gamePhase !== 'wave-complete') return;
     clearTimers();
     const next = wave + 1;
     setWave(next);
-    setWaveScore(0);
-    setTimeLeft(TIMER_DURATION);
-    setGrid(buildGrid(next));
-    setGamePhase('playing');
-  }, [gamePhase, wave, clearTimers]);
+    initWave(next);
+  }, [gamePhase, wave, clearTimers, initWave]);
 
   useEffect(() => {
     if (gamePhase !== 'playing') return;
@@ -112,18 +124,20 @@ export function useGame() {
         if (prev <= 1) {
           clearTimers();
           setGrid(g => removeMagic(g));
-          setWaveScore(ws => {
-            if (ws > 0) {
-              if (wave >= MAX_WAVE) {
-                setGamePhase('victory');
-              } else {
-                setGamePhase('wave-complete');
-              }
+
+          const gt = greensTappedRef.current;
+          const tg = totalGreensRef.current;
+          const needed = Math.ceil(tg * GREEN_THRESHOLD);
+
+          if (gt >= needed) {
+            if (wave >= MAX_WAVE) {
+              setGamePhase('victory');
             } else {
-              setGamePhase('game-over');
+              setGamePhase('wave-complete');
             }
-            return ws;
-          });
+          } else {
+            setGamePhase('game-over');
+          }
           return 0;
         }
 
@@ -159,6 +173,8 @@ export function useGame() {
         case 'green':
           pointDelta = POINTS.green;
           updatedCell = { ...cell, tapped: true };
+          greensTappedRef.current += 1;
+          setGreensTapped(g => g + 1);
           break;
         case 'red':
           pointDelta = POINTS.red;
@@ -189,5 +205,5 @@ export function useGame() {
     });
   }, [gamePhase]);
 
-  return { score, waveScore, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell };
+  return { score, waveScore, greensTapped, totalGreens, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell };
 }

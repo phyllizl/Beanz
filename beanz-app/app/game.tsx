@@ -7,7 +7,7 @@ import { WaveCompletePanel } from '../components/WaveCompletePanel';
 import { getWaveConfig } from '../constants/game';
 
 export default function GameScreen() {
-  const { score, waveScore, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell } = useGame();
+  const { score, waveScore, greensTapped, totalGreens, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell } = useGame();
 
   const isPlaying = gamePhase === 'playing';
 
@@ -37,6 +37,8 @@ export default function GameScreen() {
           timeLeft={timeLeft}
           score={score}
           wave={wave}
+          greensTapped={greensTapped}
+          totalGreens={totalGreens}
           isRunning={isPlaying}
           onStart={startGame}
         />

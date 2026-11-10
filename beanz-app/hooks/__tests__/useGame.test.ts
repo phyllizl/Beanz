@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import { useGame } from '../useGame';
-import { POINTS, MAX_WAVE, getWaveConfig } from '../../constants/game';
+import { POINTS, MAX_WAVE, getWaveConfig, getWaveTimer, GREEN_THRESHOLD } from '../../constants/game';
 import type { Cell } from '../useGame';
 import type { GamePhase } from '../useGame';
 
@@ -23,6 +23,14 @@ function renderHook<T>(hookFn: () => T): { result: HookResult<T> } {
   return { result };
 }
 
+function tapGreens(result: HookResult<ReturnType<typeof useGame>>, count: number) {
+  for (let i = 0; i < count; i++) {
+    const green = result.current.grid.find((c: Cell) => c.type === 'green' && !c.tapped);
+    if (!green) break;
+    act(() => { result.current.tapCell(green.id); });
+  }
+}
+
 beforeEach(() => {
   jest.useFakeTimers();
 });
@@ -38,21 +46,30 @@ describe('useGame - initial state', () => {
     expect(result.current.wave).toBe(1);
     expect(result.current.score).toBe(0);
     expect(result.current.waveScore).toBe(0);
+    expect(result.current.greensTapped).toBe(0);
+    expect(result.current.totalGreens).toBe(0);
   });
 });
 
 describe('useGame - grid generation', () => {
-  test('wave 1 generates a 4x4 grid (16 cells)', () => {
+  test('wave 1 generates a 5x5 grid (25 cells)', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
-    expect(result.current.grid).toHaveLength(16);
+    expect(result.current.grid).toHaveLength(25);
   });
 
   test('wave 1 grid has ~40% green beans', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
     const greenCount = result.current.grid.filter((c: Cell) => c.type === 'green').length;
-    expect(greenCount).toBe(Math.floor((16 / 100) * 40));
+    expect(greenCount).toBe(Math.floor((25 / 100) * 40));
+  });
+
+  test('totalGreens matches green cells in grid', () => {
+    const { result } = renderHook(() => useGame());
+    act(() => { result.current.startGame(); });
+    const greenCount = result.current.grid.filter((c: Cell) => c.type === 'green').length;
+    expect(result.current.totalGreens).toBe(greenCount);
   });
 
   test('remaining cells are red', () => {
@@ -60,7 +77,7 @@ describe('useGame - grid generation', () => {
     act(() => { result.current.startGame(); });
     const greenCount = result.current.grid.filter((c: Cell) => c.type === 'green').length;
     const redCount = result.current.grid.filter((c: Cell) => c.type === 'red').length;
-    expect(greenCount + redCount).toBe(16);
+    expect(greenCount + redCount).toBe(25);
   });
 
   test('all cells start untapped', () => {
@@ -73,7 +90,7 @@ describe('useGame - grid generation', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
     const ids = result.current.grid.map((c: Cell) => c.id);
-    expect(new Set(ids).size).toBe(16);
+    expect(new Set(ids).size).toBe(25);
   });
 });
 
@@ -85,22 +102,23 @@ describe('useGame - scoring', () => {
     expect(result.current.waveScore).toBe(0);
   });
 
-  test('tapping green bean adds 5 points to both score and waveScore', () => {
+  test('tapping green bean adds 5 points and increments greensTapped', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
     const greenCell = result.current.grid.find((c: Cell) => c.type === 'green')!;
     act(() => { result.current.tapCell(greenCell.id); });
     expect(result.current.score).toBe(POINTS.green);
     expect(result.current.waveScore).toBe(POINTS.green);
+    expect(result.current.greensTapped).toBe(1);
   });
 
-  test('tapping red bean subtracts 3 points', () => {
+  test('tapping red bean subtracts 3 points and does not increment greensTapped', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
     const redCell = result.current.grid.find((c: Cell) => c.type === 'red')!;
     act(() => { result.current.tapCell(redCell.id); });
     expect(result.current.score).toBe(POINTS.red);
-    expect(result.current.waveScore).toBe(POINTS.red);
+    expect(result.current.greensTapped).toBe(0);
   });
 
   test('tapping green bean marks it as tapped', () => {
@@ -119,6 +137,7 @@ describe('useGame - scoring', () => {
     act(() => { result.current.tapCell(greenCell.id); });
     act(() => { result.current.tapCell(greenCell.id); });
     expect(result.current.score).toBe(POINTS.green);
+    expect(result.current.greensTapped).toBe(1);
   });
 
   test('grid is shuffled after each tap', () => {
@@ -133,7 +152,7 @@ describe('useGame - scoring', () => {
 });
 
 describe('useGame - timer', () => {
-  test('timer starts at 12 after startGame', () => {
+  test('wave 1 timer starts at 12', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
     expect(result.current.timeLeft).toBe(12);
@@ -149,16 +168,14 @@ describe('useGame - timer', () => {
 
   test('tapping is ignored when not playing', () => {
     const { result } = renderHook(() => useGame());
-    expect(result.current.gamePhase).toBe('idle');
-    const { result: result2 } = renderHook(() => useGame());
-    act(() => { result2.current.startGame(); });
+    act(() => { result.current.startGame(); });
     act(() => { jest.advanceTimersByTime(12000); });
-    const scoreBefore = result2.current.score;
-    const greenCell = result2.current.grid.find((c: Cell) => c.type === 'green' && !c.tapped);
+    const scoreBefore = result.current.score;
+    const greenCell = result.current.grid.find((c: Cell) => c.type === 'green' && !c.tapped);
     if (greenCell) {
-      act(() => { result2.current.tapCell(greenCell.id); });
+      act(() => { result.current.tapCell(greenCell.id); });
     }
-    expect(result2.current.score).toBe(scoreBefore);
+    expect(result.current.score).toBe(scoreBefore);
   });
 });
 
@@ -194,57 +211,56 @@ describe('useGame - magic beans', () => {
   });
 });
 
-describe('useGame - wave progression', () => {
-  test('wave complete when timer expires with positive wave score', () => {
+describe('useGame - wave progression (green threshold)', () => {
+  test('wave complete when >= 50% greens tapped', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
-    const greenCell = result.current.grid.find((c: Cell) => c.type === 'green')!;
-    act(() => { result.current.tapCell(greenCell.id); });
-    expect(result.current.waveScore).toBe(POINTS.green);
+    const needed = Math.ceil(result.current.totalGreens * GREEN_THRESHOLD);
+    tapGreens(result, needed);
+    expect(result.current.greensTapped).toBeGreaterThanOrEqual(needed);
     act(() => { jest.advanceTimersByTime(12000); });
     expect(result.current.gamePhase).toBe('wave-complete');
-    expect(result.current.wave).toBe(1);
   });
 
-  test('game over when timer expires with non-positive wave score', () => {
+  test('game over when < 50% greens tapped', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
-    const redCell = result.current.grid.find((c: Cell) => c.type === 'red')!;
-    act(() => { result.current.tapCell(redCell.id); });
+    const needed = Math.ceil(result.current.totalGreens * GREEN_THRESHOLD);
+    tapGreens(result, needed - 1);
     act(() => { jest.advanceTimersByTime(12000); });
     expect(result.current.gamePhase).toBe('game-over');
   });
 
-  test('game over when timer expires with zero wave score', () => {
+  test('game over when no greens tapped', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
     act(() => { jest.advanceTimersByTime(12000); });
     expect(result.current.gamePhase).toBe('game-over');
   });
 
-  test('nextWave advances to wave 2 with larger grid', () => {
+  test('nextWave advances to wave 2 with larger grid and fresh timer', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
-    const greenCell = result.current.grid.find((c: Cell) => c.type === 'green')!;
-    act(() => { result.current.tapCell(greenCell.id); });
+    const needed = Math.ceil(result.current.totalGreens * GREEN_THRESHOLD);
+    tapGreens(result, needed);
     act(() => { jest.advanceTimersByTime(12000); });
-    expect(result.current.gamePhase).toBe('wave-complete');
 
     const scoreBefore = result.current.score;
     act(() => { result.current.nextWave(); });
     expect(result.current.wave).toBe(2);
     expect(result.current.gamePhase).toBe('playing');
-    expect(result.current.grid).toHaveLength(25);
+    expect(result.current.grid).toHaveLength(36);
     expect(result.current.score).toBe(scoreBefore);
     expect(result.current.waveScore).toBe(0);
-    expect(result.current.timeLeft).toBe(12);
+    expect(result.current.greensTapped).toBe(0);
+    expect(result.current.timeLeft).toBe(getWaveTimer(2));
   });
 
   test('cumulative score carries across waves', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
-    const g1 = result.current.grid.find((c: Cell) => c.type === 'green')!;
-    act(() => { result.current.tapCell(g1.id); });
+    const needed = Math.ceil(result.current.totalGreens * GREEN_THRESHOLD);
+    tapGreens(result, needed);
     const scoreAfterWave1 = result.current.score;
     act(() => { jest.advanceTimersByTime(12000); });
     act(() => { result.current.nextWave(); });
@@ -259,9 +275,10 @@ describe('useGame - wave progression', () => {
     act(() => { result.current.startGame(); });
 
     for (let w = 1; w <= MAX_WAVE; w++) {
-      const greenCell = result.current.grid.find((c: Cell) => c.type === 'green')!;
-      act(() => { result.current.tapCell(greenCell.id); });
-      act(() => { jest.advanceTimersByTime(12000); });
+      const needed = Math.ceil(result.current.totalGreens * GREEN_THRESHOLD);
+      tapGreens(result, needed);
+      const timerMs = getWaveTimer(w) * 1000;
+      act(() => { jest.advanceTimersByTime(timerMs); });
 
       if (w < MAX_WAVE) {
         expect(result.current.gamePhase).toBe('wave-complete');
@@ -275,8 +292,8 @@ describe('useGame - wave progression', () => {
   test('startGame resets everything back to wave 1', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
-    const greenCell = result.current.grid.find((c: Cell) => c.type === 'green')!;
-    act(() => { result.current.tapCell(greenCell.id); });
+    const needed = Math.ceil(result.current.totalGreens * GREEN_THRESHOLD);
+    tapGreens(result, needed);
     act(() => { jest.advanceTimersByTime(12000); });
     act(() => { result.current.nextWave(); });
     expect(result.current.wave).toBe(2);
@@ -285,7 +302,8 @@ describe('useGame - wave progression', () => {
     expect(result.current.wave).toBe(1);
     expect(result.current.score).toBe(0);
     expect(result.current.waveScore).toBe(0);
-    expect(result.current.grid).toHaveLength(16);
+    expect(result.current.greensTapped).toBe(0);
+    expect(result.current.grid).toHaveLength(25);
     expect(result.current.gamePhase).toBe('playing');
   });
 });
