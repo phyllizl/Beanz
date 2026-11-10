@@ -36,4 +36,20 @@ describe('SplashScreen', () => {
     act(() => { pressable.props.onPress(); });
     expect(mockPush).toHaveBeenCalledWith('/instructions');
   });
+
+  test('LEADERBOARD navigates to leaderboard', () => {
+    let root: ReactTestRenderer.ReactTestRenderer;
+    act(() => {
+      root = ReactTestRenderer.create(<SplashScreen />);
+    });
+    const lbBtn = root!.root.findAll(node => {
+      try { return node.children?.includes('LEADERBOARD'); } catch { return false; }
+    })[0];
+    let pressable = lbBtn;
+    while (pressable && typeof pressable.props.onPress !== 'function') {
+      pressable = pressable.parent as any;
+    }
+    act(() => { pressable.props.onPress(); });
+    expect(mockPush).toHaveBeenCalledWith('/leaderboard');
+  });
 });
