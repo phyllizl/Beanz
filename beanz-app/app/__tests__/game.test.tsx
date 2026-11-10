@@ -4,15 +4,22 @@ import GameScreen from '../game';
 
 const { act } = ReactTestRenderer;
 
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: mockPush }),
 }));
 
 jest.mock('expo-image', () => ({
   Image: 'ExpoImage',
 }));
 
+jest.mock('../../lib/scores', () => ({
+  submitScore: jest.fn(),
+}));
+
 describe('GameScreen', () => {
+  beforeEach(() => { mockPush.mockClear(); });
+
   test('renders BEANZ title', () => {
     let root: ReactTestRenderer.ReactTestRenderer;
     act(() => {

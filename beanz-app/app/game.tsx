@@ -1,26 +1,33 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useGame } from '../hooks/useGame';
 import { BeanGrid } from '../components/BeanGrid';
 import { ScoreBoard } from '../components/ScoreBoard';
 import { GameOverPanel } from '../components/GameOverPanel';
 import { WaveCompletePanel } from '../components/WaveCompletePanel';
 import { getWaveConfig } from '../constants/game';
+import { submitScore } from '../lib/scores';
 
 export default function GameScreen() {
+  const router = useRouter();
   const { score, waveScore, greensTapped, totalGreens, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell } = useGame();
 
   const isPlaying = gamePhase === 'playing';
+
+  const handleSubmit = async (name: string): Promise<string | null> => {
+    const id = await submitScore(name, score, wave);
+    if (id) {
+      router.push({ pathname: '/leaderboard', params: { scoreId: id } });
+    }
+    return id;
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>BEANZ</Text>
 
-      {gamePhase === 'game-over' && (
-        <GameOverPanel score={score} wave={wave} onPlayAgain={startGame} />
-      )}
-
-      {gamePhase === 'victory' && (
-        <GameOverPanel score={score} wave={wave} onPlayAgain={startGame} />
+      {(gamePhase === 'game-over' || gamePhase === 'victory') && (
+        <GameOverPanel score={score} wave={wave} onPlayAgain={startGame} onSubmit={handleSubmit} />
       )}
 
       {gamePhase === 'wave-complete' && (
