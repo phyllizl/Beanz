@@ -61,6 +61,7 @@ export default function LeaderboardScreen() {
             <Text style={[styles.headerCell, styles.waveCol]}>WAVE</Text>
           </View>
           <FlatList
+            style={{ flex: 1 }}
             data={scores}
             keyExtractor={item => item.id}
             renderItem={({ item, index }) => {
