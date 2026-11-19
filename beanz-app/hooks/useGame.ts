@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { getWaveConfig, getWaveTimer, MAX_WAVE, MAGIC_INTERVAL, MAGIC_VISIBLE_DURATION, POINTS, GREEN_THRESHOLD } from '../constants/game';
+import { getWaveConfig, getWaveTimer, MAGIC_INTERVAL, MAGIC_VISIBLE_DURATION, POINTS, GREEN_THRESHOLD } from '../constants/game';
 
 export interface Cell {
   id: string;
@@ -8,7 +8,7 @@ export interface Cell {
   originalType?: 'green' | 'red';
 }
 
-export type GamePhase = 'idle' | 'playing' | 'wave-complete' | 'game-over' | 'victory';
+export type GamePhase = 'idle' | 'playing' | 'wave-complete' | 'game-over';
 
 function shuffle<T>(array: T[]): T[] {
   const arr = [...array];
@@ -35,7 +35,7 @@ function buildGrid(wave: number): Cell[] {
   return shuffle(cells);
 }
 
-export function useGame() {
+export function useGame(initialWave?: number) {
   const [grid, setGrid] = useState<Cell[]>([]);
   const [score, setScore] = useState(0);
   const [waveScore, setWaveScore] = useState(0);
@@ -103,10 +103,11 @@ export function useGame() {
 
   const startGame = useCallback(() => {
     clearTimers();
-    setWave(1);
+    const w = initialWave ?? 1;
+    setWave(w);
     setScore(0);
-    initWave(1);
-  }, [clearTimers, initWave]);
+    initWave(w);
+  }, [clearTimers, initWave, initialWave]);
 
   const nextWave = useCallback(() => {
     if (gamePhase !== 'wave-complete') return;
@@ -130,11 +131,7 @@ export function useGame() {
           const needed = Math.ceil(tg * GREEN_THRESHOLD);
 
           if (gt >= needed) {
-            if (wave >= MAX_WAVE) {
-              setGamePhase('victory');
-            } else {
-              setGamePhase('wave-complete');
-            }
+            setGamePhase('wave-complete');
           } else {
             setGamePhase('game-over');
           }
@@ -175,6 +172,15 @@ export function useGame() {
           updatedCell = { ...cell, tapped: true };
           greensTappedRef.current += 1;
           setGreensTapped(g => g + 1);
+          if (greensTappedRef.current >= totalGreensRef.current) {
+            clearTimers();
+            setScore(s => s + pointDelta);
+            setWaveScore(ws => ws + pointDelta);
+            const newGrid = [...prevGrid];
+            newGrid[cellIndex] = updatedCell;
+            setGamePhase('wave-complete');
+            return removeMagic(newGrid);
+          }
           break;
         case 'red':
           pointDelta = POINTS.red;
@@ -203,7 +209,7 @@ export function useGame() {
       newGrid[cellIndex] = updatedCell;
       return shuffle(newGrid);
     });
-  }, [gamePhase]);
+  }, [gamePhase, clearTimers, removeMagic]);
 
   return { score, waveScore, greensTapped, totalGreens, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell };
 }

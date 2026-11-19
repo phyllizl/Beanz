@@ -1,10 +1,6 @@
-import { getWaveConfig, getWaveTimer, MAX_WAVE, BASE_TIMER, MIN_TIMER, GREEN_THRESHOLD, MAGIC_INTERVAL, MAGIC_VISIBLE_DURATION, POINTS } from '../game';
+import { getWaveConfig, getWaveTimer, MAX_GRID, MIN_GREEN_PERCENT, BASE_TIMER, MIN_TIMER, GREEN_THRESHOLD, MAGIC_INTERVAL, MAGIC_VISIBLE_DURATION, POINTS } from '../game';
 
 describe('game constants', () => {
-  test('MAX_WAVE is 9', () => {
-    expect(MAX_WAVE).toBe(9);
-  });
-
   test('base timer is 12 seconds', () => {
     expect(BASE_TIMER).toBe(12);
   });
@@ -54,20 +50,20 @@ describe('getWaveConfig', () => {
     expect(config.magicCount).toBe(5);
   });
 
-  test('grid size formula is wave + 4', () => {
-    for (let w = 1; w <= MAX_WAVE; w++) {
-      expect(getWaveConfig(w).gridSize).toBe(w + 4);
-    }
+  test('grid size caps at MAX_GRID', () => {
+    expect(getWaveConfig(1).gridSize).toBe(5);
+    expect(getWaveConfig(9).gridSize).toBe(MAX_GRID);
+    expect(getWaveConfig(20).gridSize).toBe(MAX_GRID);
   });
 
-  test('green percent formula is 42 - wave * 2', () => {
-    for (let w = 1; w <= MAX_WAVE; w++) {
-      expect(getWaveConfig(w).greenPercent).toBe(42 - w * 2);
-    }
+  test('green percent floors at MIN_GREEN_PERCENT', () => {
+    expect(getWaveConfig(1).greenPercent).toBe(40);
+    expect(getWaveConfig(9).greenPercent).toBe(MIN_GREEN_PERCENT);
+    expect(getWaveConfig(20).greenPercent).toBe(MIN_GREEN_PERCENT);
   });
 
   test('magic count formula is ceil(wave / 2)', () => {
-    for (let w = 1; w <= MAX_WAVE; w++) {
+    for (let w = 1; w <= 9; w++) {
       expect(getWaveConfig(w).magicCount).toBe(Math.ceil(w / 2));
     }
   });

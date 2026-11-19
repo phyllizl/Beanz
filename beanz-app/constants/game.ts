@@ -4,15 +4,16 @@ export interface WaveConfig {
   magicCount: number;
 }
 
-export const MAX_WAVE = 9;
 export const BASE_TIMER = 12;
 export const MIN_TIMER = 8;
+export const MAX_GRID = 13;
+export const MIN_GREEN_PERCENT = 24;
 export const GREEN_THRESHOLD = 1.0;
 
 export function getWaveConfig(wave: number): WaveConfig {
   return {
-    gridSize: wave + 4,
-    greenPercent: 42 - wave * 2,
+    gridSize: Math.min(MAX_GRID, wave + 4),
+    greenPercent: Math.max(MIN_GREEN_PERCENT, 42 - wave * 2),
     magicCount: Math.ceil(wave / 2),
   };
 }

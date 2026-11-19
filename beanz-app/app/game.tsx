@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useGame } from '../hooks/useGame';
 import { BeanGrid } from '../components/BeanGrid';
 import { ScoreBoard } from '../components/ScoreBoard';
@@ -10,11 +10,14 @@ import { submitScore } from '../lib/scores';
 
 export default function GameScreen() {
   const router = useRouter();
-  const { score, waveScore, greensTapped, totalGreens, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell } = useGame();
+  const { playerName, startWave } = useLocalSearchParams<{ playerName: string; startWave: string }>();
+  const name = playerName ?? 'AAA';
+  const initialWave = startWave ? Math.max(1, Math.min(Number(startWave), 9)) : undefined;
+  const { score, waveScore, greensTapped, totalGreens, timeLeft, gamePhase, grid, wave, startGame, nextWave, tapCell } = useGame(initialWave);
 
   const isPlaying = gamePhase === 'playing';
 
-  const handleSubmit = async (name: string): Promise<string | null> => {
+  const handleSubmit = async (): Promise<string | null> => {
     const id = await submitScore(name, score, wave);
     if (id) {
       router.push({ pathname: '/leaderboard', params: { scoreId: id } });
@@ -26,8 +29,8 @@ export default function GameScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>BEANZ</Text>
 
-      {(gamePhase === 'game-over' || gamePhase === 'victory') && (
-        <GameOverPanel score={score} wave={wave} onPlayAgain={startGame} onSubmit={handleSubmit} />
+      {gamePhase === 'game-over' && (
+        <GameOverPanel score={score} wave={wave} playerName={name} onPlayAgain={startGame} onSubmit={handleSubmit} />
       )}
 
       {gamePhase === 'wave-complete' && (

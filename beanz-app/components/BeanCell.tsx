@@ -4,12 +4,12 @@ import { Image } from 'expo-image';
 import type { Cell } from '../hooks/useGame';
 
 const BEAN_IMAGES = {
-  green: require('../assets/greenbean.gif'),
-  greenTapped: require('../assets/greenSoil.png'),
-  red: require('../assets/3dgifmaker89063.gif'),
-  redTapped: require('../assets/monster.gif'),
-  magic: require('../assets/magicBeans.gif'),
-  magicTapped: require('../assets/newstar.png'),
+  green: require('../assets/greenbean_bounce.gif'),
+  greenTapped: require('../assets/sprout.png'),
+  red: require('../assets/redbean_bounce.gif'),
+  redTapped: require('../assets/monster.png'),
+  magic: require('../assets/magicbean.png'),
+  magicTapped: require('../assets/star.png'),
 } as const;
 
 function getImage(cell: Cell) {

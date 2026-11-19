@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import { useGame } from '../useGame';
-import { POINTS, MAX_WAVE, getWaveConfig, getWaveTimer, GREEN_THRESHOLD } from '../../constants/game';
+import { POINTS, getWaveConfig, getWaveTimer, GREEN_THRESHOLD } from '../../constants/game';
 import type { Cell } from '../useGame';
 import type { GamePhase } from '../useGame';
 
@@ -270,23 +270,22 @@ describe('useGame - wave progression (green threshold)', () => {
     expect(result.current.score).toBe(scoreAfterWave1 + POINTS.green);
   });
 
-  test('victory after completing wave 9', () => {
+  test('game continues endlessly past wave 9', () => {
     const { result } = renderHook(() => useGame());
     act(() => { result.current.startGame(); });
 
-    for (let w = 1; w <= MAX_WAVE; w++) {
+    for (let w = 1; w <= 10; w++) {
       const needed = Math.ceil(result.current.totalGreens * GREEN_THRESHOLD);
       tapGreens(result, needed);
       const timerMs = getWaveTimer(w) * 1000;
       act(() => { jest.advanceTimersByTime(timerMs); });
 
-      if (w < MAX_WAVE) {
-        expect(result.current.gamePhase).toBe('wave-complete');
-        act(() => { result.current.nextWave(); });
-      }
+      expect(result.current.gamePhase).toBe('wave-complete');
+      act(() => { result.current.nextWave(); });
     }
 
-    expect(result.current.gamePhase).toBe('victory');
+    expect(result.current.wave).toBe(11);
+    expect(result.current.gamePhase).toBe('playing');
   });
 
   test('startGame resets everything back to wave 1', () => {
